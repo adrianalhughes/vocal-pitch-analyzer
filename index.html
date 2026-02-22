@@ -251,6 +251,25 @@
             text-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
         }
         
+        .range-card {
+            background: linear-gradient(135deg, rgba(255, 0, 128, 0.1) 0%, rgba(255, 136, 0, 0.1) 100%);
+            border: 2px solid var(--secondary);
+            border-radius: 20px;
+            padding: 25px 45px;
+            min-width: 150px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(255, 0, 128, 0.2);
+        }
+        
+        .range-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--secondary);
+            text-shadow: 0 0 15px rgba(255, 0, 128, 0.3);
+            text-transform: uppercase;
+        }
+        
         .tuner-section {
             margin-bottom: 40px;
         }
@@ -498,6 +517,15 @@
                 font-size: 2.5rem;
             }
             
+            .range-card {
+                padding: 20px 30px;
+                min-width: 120px;
+            }
+            
+            .range-value {
+                font-size: 1.8rem;
+            }
+            
             button {
                 padding: 15px 30px;
                 font-size: 1rem;
@@ -531,6 +559,10 @@
                 <div class="cents-card">
                     <div class="cents-value" id="centsDisplay">--</div>
                     <div class="note-label">Cents</div>
+                </div>
+                <div class="range-card">
+                    <div class="range-value" id="rangeDisplay">--</div>
+                    <div class="note-label">Vocal Range</div>
                 </div>
             </div>
             
@@ -601,6 +633,7 @@
         const frequencyDisplay = document.getElementById('frequencyDisplay');
         const noteDisplay = document.getElementById('noteDisplay');
         const centsDisplay = document.getElementById('centsDisplay');
+        const rangeDisplay = document.getElementById('rangeDisplay');
         const tunerNeedle = document.getElementById('tunerNeedle');
         const tunerStatus = document.getElementById('tunerStatus');
         const volumeBar = document.getElementById('volumeBar');
@@ -685,6 +718,61 @@
                 cents: cents,
                 frequency: frequency
             };
+        }
+        
+        // Determine vocal range classification
+        function getVocalRange(frequency) {
+            // Vocal range classifications (approximate):
+            // Bass: E2 (82 Hz) to E4 (330 Hz)
+            // Tenor: C3 (130 Hz) to C5 (523 Hz)
+            // Alto: F3 (175 Hz) to F5 (698 Hz)
+            // Soprano: C4 (262 Hz) to C6 (1047 Hz)
+            
+            if (frequency >= 262 && frequency <= 1047) {
+                // Check if it's in soprano range
+                if (frequency >= 349) {  // F4 and above is more typically soprano
+                    return 'Soprano';
+                } else if (frequency >= 262) {
+                    // Between C4 and F4 - could be soprano or alto
+                    return 'Soprano/Alto';
+                }
+            }
+            
+            if (frequency >= 175 && frequency <= 698) {
+                // Alto range
+                if (frequency < 262) {
+                    return 'Alto';
+                } else if (frequency < 349) {
+                    return 'Alto/Soprano';
+                }
+            }
+            
+            if (frequency >= 130 && frequency <= 523) {
+                // Tenor range
+                if (frequency < 175) {
+                    return 'Tenor';
+                } else if (frequency < 262) {
+                    return 'Tenor/Alto';
+                }
+            }
+            
+            if (frequency >= 82 && frequency <= 330) {
+                // Bass range
+                if (frequency < 130) {
+                    return 'Bass';
+                } else if (frequency < 175) {
+                    return 'Bass/Tenor';
+                }
+            }
+            
+            // Outside typical vocal ranges
+            if (frequency < 82) {
+                return 'Sub-Bass';
+            } else if (frequency > 1047) {
+                return 'Soprano+';
+            }
+            
+            return '--';
         }
         
         // Update tuner display
@@ -798,10 +886,12 @@
             
             if (frequency > 0 && frequency < 2000) {
                 const noteInfo = frequencyToNote(frequency);
+                const vocalRange = getVocalRange(frequency);
                 
                 frequencyDisplay.textContent = Math.round(frequency);
                 noteDisplay.textContent = noteInfo.note;
                 centsDisplay.textContent = (noteInfo.cents > 0 ? '+' : '') + noteInfo.cents;
+                rangeDisplay.textContent = vocalRange;
                 
                 updateTuner(noteInfo.cents);
                 
@@ -912,6 +1002,7 @@
         frequencyDisplay.textContent = '---';
         noteDisplay.textContent = '--';
         centsDisplay.textContent = '--';
+        rangeDisplay.textContent = '--';
         tunerStatus.textContent = 'READY';
         tunerStatus.className = 'tuner-status';
     </script>
